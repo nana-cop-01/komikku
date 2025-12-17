@@ -18,7 +18,7 @@ class PdfReader(private val parcelFileDescriptor: ParcelFileDescriptor) : Closea
     private var isClosed = false
 
     val pageCount: Int
-        get() = if (!isClosed) pdfRenderer.pageCount else 0
+        get() = if (isClosed) 0 else pdfRenderer.pageCount
 
     /**
      * Renders a page to a bitmap.
@@ -52,7 +52,9 @@ class PdfReader(private val parcelFileDescriptor: ParcelFileDescriptor) : Closea
 
         try {
             // Create directory if it doesn't exist
-            if (!outputDir.isDirectory && !outputDir.createDirectory()) {
+            if (outputDir.isDirectory || outputDir.createDirectory()) {
+                // ok
+            } else {
                 throw Exception("Failed to create output directory")
             }
 
@@ -87,18 +89,18 @@ class PdfReader(private val parcelFileDescriptor: ParcelFileDescriptor) : Closea
     }
 
     override fun close() {
-        if (!isClosed) {
-            try {
-                pdfRenderer.close()
-            } catch (e: Exception) {
-                logcat { "Error closing PdfRenderer: ${e.message}" }
-            }
-            try {
-                parcelFileDescriptor.close()
-            } catch (e: Exception) {
-                logcat { "Error closing ParcelFileDescriptor: ${e.message}" }
-            }
-            isClosed = true
+        if (isClosed) return
+
+        try {
+            pdfRenderer.close()
+        } catch (e: Exception) {
+            logcat { "Error closing PdfRenderer: ${e.message}" }
         }
+        try {
+            parcelFileDescriptor.close()
+        } catch (e: Exception) {
+            logcat { "Error closing ParcelFileDescriptor: ${e.message}" }
+        }
+        isClosed = true
     }
 }
