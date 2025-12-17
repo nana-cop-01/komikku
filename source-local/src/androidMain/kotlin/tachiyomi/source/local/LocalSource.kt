@@ -1,6 +1,7 @@
 package tachiyomi.source.local
 
 import android.content.Context
+import android.graphics.Bitmap
 import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.source.CatalogueSource
 import eu.kanade.tachiyomi.source.Source
@@ -11,6 +12,11 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.util.lang.compareToCaseInsensitiveNaturalOrder
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
+import java.nio.charset.StandardCharsets
+import kotlin.time.Duration.Companion.days
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.serialization.json.Json
@@ -19,9 +25,6 @@ import logcat.LogPriority
 import mihon.core.archive.ArchiveReader
 import mihon.core.archive.ZipWriter
 import mihon.core.archive.archiveReader
-import android.graphics.Bitmap
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import mihon.core.archive.pdfReader
 import nl.adaptivity.xmlutil.core.AndroidXmlReader
 import nl.adaptivity.xmlutil.serialization.XML
@@ -47,9 +50,6 @@ import tachiyomi.source.local.io.Format
 import tachiyomi.source.local.io.LocalSourceFileSystem
 import tachiyomi.source.local.metadata.fillMetadata
 import uy.kohesive.injekt.injectLazy
-import java.io.InputStream
-import java.nio.charset.StandardCharsets
-import kotlin.time.Duration.Companion.days
 import tachiyomi.domain.source.model.Source as DomainSource
 
 actual class LocalSource(
