@@ -2,6 +2,8 @@ package mihon.core.archive
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
 import com.hippo.unifile.UniFile
@@ -12,7 +14,10 @@ import java.io.Closeable
  * Wrapper for reading PDF files using Android's built-in PdfRenderer.
  * Can convert PDF pages to image files for use with existing image loaders.
  */
-class PdfReader(private val parcelFileDescriptor: ParcelFileDescriptor) : Closeable {
+class PdfReader(
+    private val parcelFileDescriptor: ParcelFileDescriptor,
+    private val tempFile: java.io.File? = null,
+) : Closeable {
 
     private val pdfRenderer = PdfRenderer(parcelFileDescriptor)
     private var isClosed = false
@@ -32,6 +37,9 @@ class PdfReader(private val parcelFileDescriptor: ParcelFileDescriptor) : Closea
             val page = pdfRenderer.openPage(pageIndex)
             return try {
                 val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                // Ensure white background so JPEGs don't have black where transparency exists
+                val canvas = Canvas(bitmap)
+                canvas.drawColor(Color.WHITE)
                 page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                 bitmap
             } finally {
@@ -52,7 +60,7 @@ class PdfReader(private val parcelFileDescriptor: ParcelFileDescriptor) : Closea
 
         try {
             // Create directory if it doesn't exist
-            if (outputDir.isDirectory || outputDir.createDirectory()) {
+            if (outputDir.isDirectory || outputDir.createDirectory() != null) {
                 // ok
             } else {
                 throw Exception("Failed to create output directory")
@@ -100,6 +108,12 @@ class PdfReader(private val parcelFileDescriptor: ParcelFileDescriptor) : Closea
             parcelFileDescriptor.close()
         } catch (e: Exception) {
             logcat { "Error closing ParcelFileDescriptor: ${e.message}" }
+        }
+        // If we created a temporary file fallback, try to delete it now
+        try {
+            tempFile?.delete()
+        } catch (e: Exception) {
+            logcat { "Error deleting temp PDF file: ${e.message}" }
         }
         isClosed = true
     }
