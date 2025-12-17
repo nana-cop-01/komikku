@@ -19,7 +19,10 @@ import logcat.LogPriority
 import mihon.core.archive.ArchiveReader
 import mihon.core.archive.ZipWriter
 import mihon.core.archive.archiveReader
-import mihon.core.archive.epubReader
+import android.graphics.Bitmap
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import mihon.core.archive.pdfReader
 import nl.adaptivity.xmlutil.core.AndroidXmlReader
 import nl.adaptivity.xmlutil.serialization.XML
 import tachiyomi.core.common.i18n.stringResource
@@ -353,7 +356,7 @@ actual class LocalSource(
         val chapters = fileSystem.getFilesInMangaDirectory(manga.url)
             // Only keep supported formats
             .filterNot { it.name.orEmpty().startsWith('.') }
-            .filter { it.isDirectory || Archive.isSupported(it) || it.extension.equals("epub", true) }
+            .filter { it.isDirectory || Archive.isSupported(it) || it.extension.equals("epub", true) || it.extension.equals("pdf", true) }
             .map { chapterFile ->
                 SChapter.create().apply {
                     url = "${manga.url}/${chapterFile.name}"
@@ -446,6 +449,16 @@ actual class LocalSource(
                         val entry = epub.getImagesFromPages().firstOrNull()
 
                         entry?.let { coverManager.update(manga, epub.getInputStream(it)!!) }
+                    }
+                }
+                is Format.Pdf -> {
+                    format.file.pdfReader(context).use { pdf ->
+                        if (pdf.pageCount > 0) {
+                            val bitmap = pdf.renderPage(0)
+                            val stream = ByteArrayOutputStream()
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
+                            coverManager.update(manga, ByteArrayInputStream(stream.toByteArray()))
+                        }
                     }
                 }
             }
