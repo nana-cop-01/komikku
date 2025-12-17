@@ -38,9 +38,6 @@ class PdfReader(private val parcelFileDescriptor: ParcelFileDescriptor) : Closea
         return size
     }
 
-    /**
-     * Gets metadata from the PDF.
-     */
     fun getMetadata(): Map<String, String> {
         val meta = mutableMapOf<String, String>()
         // Pdfium doesn't directly support metadata, but we can try to get title etc.
