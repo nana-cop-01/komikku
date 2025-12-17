@@ -15,7 +15,6 @@ import okhttp3.Response
 import rx.Observable
 import rx.Producer
 import rx.Subscription
-import uy.kohesive.injekt.Injekt
 import java.io.IOException
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -135,17 +134,18 @@ fun OkHttpClient.newCachelessCallWithProgress(request: Request, listener: Progre
     return progressClient.newCall(request)
 }
 
-inline fun <reified T> Response.parseAs(json: Json = Injekt.get()): T {
-    return decodeFromJsonResponse(json, serializer(), this)
+context(Json)
+inline fun <reified T> Response.parseAs(): T {
+    return decodeFromJsonResponse(serializer(), this)
 }
 
+context(Json)
 fun <T> decodeFromJsonResponse(
-    json: Json,
     deserializer: DeserializationStrategy<T>,
     response: Response,
 ): T {
-    return response.body!!.source().use {
-        json.decodeFromBufferedSource(deserializer, it)
+    return response.body.source().use {
+        decodeFromBufferedSource(deserializer, it)
     }
 }
 
