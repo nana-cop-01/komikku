@@ -73,7 +73,13 @@ jobs:
           echo "VERSION_TAG=$version_tag" >> $GITHUB_OUTPUT
           echo "COMMIT_COUNT=$commit_count"
           echo "COMMIT_COUNT=$commit_count" >> $GITHUB_OUTPUT
-          mv app/build/outputs/apk/preview/app-universal-preview-unsigned.apk Komikku-$version_tag-r$commit_count.apk
+          APK_PATH=$(find app/build/outputs/apk/preview -name "*unsigned.apk" -type f | head -1)
+          if [ -z "$APK_PATH" ]; then
+            echo "APK not found in preview variant output"
+            ls -la app/build/outputs/apk/preview/ 2>/dev/null || echo "preview directory not found"
+            exit 1
+          fi
+          mv "$APK_PATH" Komikku-$version_tag-r$commit_count.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
