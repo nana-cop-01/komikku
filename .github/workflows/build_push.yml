@@ -51,6 +51,10 @@ jobs:
           contents: '{}'
           write-mode: overwrite
 
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_FILE }}" | base64 --decode > app/nanacomik.keystore
+
       - name: Set up gradle
         uses: gradle/actions/setup-gradle@4d9f0ba0025fe599b4ebab900eb7f3a1d93ef4c2 # v5
 
@@ -59,6 +63,10 @@ jobs:
 
       - name: Build app
         run: ./gradlew assemblePreview -Penable-updater
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
       - name: Run unit tests
         run: ./gradlew testReleaseUnitTest
@@ -73,18 +81,22 @@ jobs:
           echo "VERSION_TAG=$version_tag" >> $GITHUB_OUTPUT
           echo "COMMIT_COUNT=$commit_count"
           echo "COMMIT_COUNT=$commit_count" >> $GITHUB_OUTPUT
-          APK_PATH=$(find app/build/outputs/apk/preview -name "*unsigned.apk" -type f | head -1)
+          
+          # Find the universal APK (app-universal-preview.apk)
+          APK_PATH=$(find app/build/outputs/apk/preview -name "app-universal-preview.apk" -type f | head -1)
           if [ -z "$APK_PATH" ]; then
-            echo "APK not found in preview variant output"
-            ls -la app/build/outputs/apk/preview/ 2>/dev/null || echo "preview directory not found"
+            echo "Error: Universal APK not found"
+            echo "Available APKs:"
+            find app/build/outputs/apk/preview -type f -name "*.apk"
             exit 1
           fi
-          mv "$APK_PATH" Komikku-$version_tag-r$commit_count.apk
+          
+          mv "$APK_PATH" Nana-Comik-$version_tag-r$commit_count.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
-          name: Komikku-${{ steps.current_commit.outputs.VERSION_TAG }}-r${{ steps.current_commit.outputs.COMMIT_COUNT }}.apk
+          name: Nana-Comik-${{ steps.current_commit.outputs.VERSION_TAG }}-r${{ steps.current_commit.outputs.COMMIT_COUNT }}.apk
           path: ./*.apk
 
       - name: Upload mapping

@@ -23,7 +23,7 @@ android {
     namespace = "eu.kanade.tachiyomi"
 
     defaultConfig {
-        applicationId = "app.komikku"
+        applicationId = "app.nanacomik"
 
         versionCode = 77
         versionName = "1.13.5"
@@ -35,6 +35,15 @@ android {
         buildConfigField("boolean", "UPDATER_ENABLED", "${Config.enableUpdater}")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file("nanacomik.keystore")
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "nanacomik123"
+            keyAlias = System.getenv("KEY_ALIAS") ?: "nanacomik"
+            keyPassword = System.getenv("KEY_PASSWORD") ?: "nanacomik123"
+        }
     }
 
     buildTypes {
@@ -50,6 +59,8 @@ android {
             proguardFiles("proguard-android-optimize.txt", "proguard-rules.pro")
 
             buildConfigField("String", "BUILD_TIME", "\"${getBuildTime(useLastCommitTime = true)}\"")
+            
+            signingConfig = signingConfigs.getByName("release")
         }
 
         val commonMatchingFallbacks = listOf(release.name)
@@ -67,6 +78,7 @@ android {
             initWith(release)
 
             applicationIdSuffix = ".foss"
+            signingConfig = signingConfigs.getByName("release")
 
             matchingFallbacks.addAll(commonMatchingFallbacks)
         }
@@ -76,7 +88,7 @@ android {
             applicationIdSuffix = ".beta"
 
             versionNameSuffix = debug.versionNameSuffix
-            signingConfig = debug.signingConfig
+            signingConfig = signingConfigs.getByName("release")
 
             matchingFallbacks.addAll(commonMatchingFallbacks)
 
