@@ -1,35 +1,28 @@
 package mihon.core.archive
 
 import android.graphics.Bitmap
+import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
-import com.shockwave.pdfium.PdfiumCore
-import com.shockwave.pdfium.util.Size
 import java.io.Closeable
 
 /**
- * Wrapper for reading PDF files using PdfiumAndroid.
+ * Wrapper for reading PDF files using Android's built-in PdfRenderer.
  */
 class PdfReader(private val parcelFileDescriptor: ParcelFileDescriptor) : Closeable {
 
-    private val pdfiumCore = PdfiumCore()
-    private val pdfDocument = pdfiumCore.newDocument(parcelFileDescriptor, "")
+    private val pdfRenderer = PdfRenderer(parcelFileDescriptor)
 
-    val pageCount: Int = pdfiumCore.getPageCount(pdfDocument)
+    val pageCount: Int = pdfRenderer.pageCount
 
     /**
      * Renders a page to a bitmap.
      */
     fun renderPage(pageIndex: Int, width: Int = 1240, height: Int = 1754): Bitmap {
+        val page = pdfRenderer.openPage(pageIndex)
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        pdfiumCore.renderPageBitmap(pdfDocument, bitmap, pageIndex, 0, 0, width, height)
+        page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+        page.close()
         return bitmap
-    }
-
-    /**
-     * Gets the size of a page.
-     */
-    fun getPageSize(pageIndex: Int): Size {
-        return pdfiumCore.getPageSize(pdfDocument, pageIndex)
     }
 
     fun getMetadata(): Map<String, String> {
@@ -38,7 +31,7 @@ class PdfReader(private val parcelFileDescriptor: ParcelFileDescriptor) : Closea
     }
 
     override fun close() {
-        pdfiumCore.closeDocument(pdfDocument)
+        pdfRenderer.close()
         parcelFileDescriptor.close()
     }
 }
