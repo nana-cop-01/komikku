@@ -376,7 +376,7 @@ actual class LocalSource(
                         format.file.epubReader(context).use { epub ->
                             epub.fillMetadata(manga, this)
                         }
-                    } else {
+                    } else if (format !is Format.Pdf) {
                         getComicInfoForChapter(chapterFile) { stream, /* SY --> */ _ /* SY <-- */ ->
                             setChapterDetailsFromComicInfoFile(stream, this)
                         }
